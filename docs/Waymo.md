@@ -141,3 +141,7 @@ This process will extract the required masks from your processed data.
 ## 5. Normal & Material Prior
 
 TODO
+
+## 5. LiDAR Intensity Map
+
+TODO

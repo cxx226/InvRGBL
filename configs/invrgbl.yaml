@@ -1,0 +1,206 @@
+seed: 0
+dataset: waymo/1cams
+
+# ------------- Trainer ------------ #
+trainer:
+  type: models.trainers.MultiTrainer
+  freeze_step: 20000
+  optim:
+    num_iters: 30000
+    use_grad_scaler: false
+    cache_buffer_freq: -1 # if > 0, use error based image sampler for training
+  render:
+    near_plane: 0.1 # near plane for rendering
+    far_plane: 10000000000.0 # far plane for rendering
+    antialiased: false # whether to use antialiasing for gaussian rendering, supported by gsplat kernel
+    packed: false # whether to use packed rendering, supported by gsplat kernel
+    absgrad: true #true # whether to use absolute gradient for rendering, supported by gsplat kernel
+    sparse_grad: false # whether to use sparse gradient for rendering, supported by gsplat kernel
+    batch_size: 1 # batch size for rendering, currently only support 1
+    pbr: true
+  losses:
+    rgb:
+      w: 0.8
+    ssim:
+      w: 0.2
+    mask:
+      w: 0.05
+      opacity_loss_type: bce   # [bce, safe_bce]
+    depth:
+      w: 0.01
+      inverse_depth: False
+      normalize: False
+      loss_type: l1
+      lidar_w_decay: -1
+    affine:
+    w: 0.00001
+    pbr:
+      w: 1.0
+    diffuse_light:
+      w: 0.001
+    albedo:
+      w: 0.01
+    roughness:
+      w: 0.1
+    smooth_roughness:
+      w: 0.05
+    smooth_sun_visibility:
+      w: 0.05
+    sun_visibility:
+      w: 0.1
+    intensity:
+      w: 0.1
+    ref_neighborhood_smoothness:
+      w: 0.01
+    ref_region_consistency:
+      w: 0.001
+    albedo_smooth:
+      w: 0.1
+    ref_region_consistency_albedo:
+      w: 0.2
+    gt_normal:
+      w: 0.1
+    smooth_normal:
+      w: 0.01
+    opacity_entropy:
+      w: 0.001
+    inverse_depth_smoothness:
+      w: 0.01
+    dynamic_region:
+      w: 1.0
+      start_from: 0
+  res_schedule:
+    double_steps: 250 # training starts at 1/d resolution, every n steps this is doubled
+    downscale_times: 2 # at the beginning, resolution is 1/2^d, where d is this number
+  gaussian_optim_general_cfg:
+    xyz:
+      lr: 1.6e-04
+      lr_final: 1.6e-06
+      scale_factor: scene_radius # str or float, if "scene_scale", scale the learning rate by the scene scale
+    sh_dc:
+      lr: 0.0025
+    sh_rest:
+      lr: 0.000125
+    opacity:
+      lr: 0.05
+    scaling:
+      lr: 0.005
+    rotation:
+      lr: 0.001
+    normal:
+      lr:  1.6e-04
+    base_color:
+      lr: 0.001
+    roughness:
+      lr: 0.001
+    reflectivity:
+      lr: 0.001
+    sun_visibility:
+      lr: 0.001
+    incidents_dc:
+      lr: 0.001
+    incidents_rest:
+      lr: 0.0001
+  gaussian_ctrl_general_cfg:
+    warmup_steps: 500             # warmup steps for alpha
+    reset_alpha_interval: 3000    # reset alpha every n steps
+    refine_interval: 100          # refine gaussians every n steps
+    sh_degree_interval: 1000      # every n intervals turn on another sh degree
+    n_split_samples: 2            # number of samples to split gaussians into
+    # may differ in different models
+    reset_alpha_value: 0.01       # reset alpha to this value
+    densify_grad_thresh: 0.005  # above this grad, gaussians are densified
+    densify_size_thresh: 0.03   # below this size, gaussians are *duplicated*, otherwise split
+    cull_alpha_thresh: 0.005       # threshold of opacity for culling gaussians
+    cull_scale_thresh: 0.5        # threshold of scale for culling gaussians
+    cull_screen_size: 0.15        # if a gaussian is more than this percent of screen space, cull it
+    split_screen_size: 0.05       # if a gaussian is more than this percent of screen space, split it
+    stop_screen_size_at: 4000     # stop culling/splitting at this step WRT screen size of gaussians
+    stop_split_at: 15000          # stop splitting at this step
+    sh_degree: 3                  # sh degree for gaussians
+
+# ------------- Model ------------ #
+model:
+  Background:
+    type: models.gaussians.RelightableGaussian
+    init:
+      from_lidar:
+        num_samples: 800_000
+        return_color: True
+      near_randoms: 0 #100_000
+      far_randoms: 0 #100_000
+    reg:
+      sharp_shape_reg: null
+        # w: 1.
+        # step_interval: 10
+        # max_gauss_ratio: 10.       # threshold of ratio of gaussian max to min scale before applying regularization loss from the PhysGaussian paper
+  RigidNodes:
+    type: models.nodes.RelightRigidNodes
+    init:
+      instance_max_pts: 5000 # max initial points for each instance
+      only_moving: true # only optimize moving instances
+      traj_length_thres: 1.0 # threshold of trajectory length for moving instances
+    ctrl:
+      cull_scale_thresh: 0.1
+      stop_screen_size_at: 30000
+      stop_split_at: 20000
+      cull_out_of_bound: true
+    reg:
+      sharp_shape_reg:
+        w: 1.
+        step_interval: 10
+        max_gauss_ratio: 10.
+      temporal_smooth_reg:
+        trans:
+          w: 0.01 # optimal value may vary
+          smooth_range: 5 # no ablation
+    optim:
+      ins_rotation:
+        lr: 0.00001
+        lr_final: 0.000005
+      ins_translation:
+        lr: 0.0005
+        lr_final: 0.0001
+  Sky:
+    type: models.modules.EnvLight
+    params:
+      resolution: 1024
+    optim:
+      all:
+        lr: 0.01
+  Affine:
+    type: models.modules.AffineTransform
+    params:
+      embedding_dim: 4
+      base_mlp_layer_width: 64
+      pixel_affine: False
+    optim:
+      all:
+        lr: 1.0e-5
+        weight_decay: 1.0e-6
+  CamPose:
+    type: models.modules.CameraOptModule
+    optim:
+      all:
+        lr: 1.0e-5
+        weight_decay: 1.0e-6
+
+# ------------- render ------------ #
+render:
+  fps: 10 # frames per second for the main rendered output
+  render_full: True # whether to render full resolution videos
+  render_test: True # whether to render test set
+  render_novel: 
+    traj_types:
+      - front_center_interp # type of trajectory for novel view synthesis
+    fps: 24 # frames per second for novel view rendering
+  vis_lidar: False # whether to visualize lidar points on ground truth images
+  vis_sky: False # whether to include "rgb_sky" and "rgb_sky_blend" in rendered keys
+  vis_error: False # whether to include "rgb_error_map" in rendered keys
+
+# ------------- logging ------------ #
+logging:
+  vis_freq: 5000 
+  print_freq: 500 
+  saveckpt_freq: 5000 
+  save_seperate_video: True 

@@ -1,0 +1,5 @@
+# ninja log v7
+3	12684	1756179890744304098	/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/build/temp.linux-x86_64-cpython-39/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/src/trace.o	b0b4613da45c81d4
+2	14244	1756179890744304098	/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/build/temp.linux-x86_64-cpython-39/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/src/construct.o	5ba2760b90ddccc6
+1	18037	1756179890740304005	/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/build/temp.linux-x86_64-cpython-39/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/src/bindings.o	d4f863664dbe8390
+2	51545	1756179890744304098	/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/build/temp.linux-x86_64-cpython-39/Node09_nvme/chenxiaoxue/chenxx/invRGBL/bvh/src/bvh.o	d645f90394c8af2

@@ -59,6 +59,9 @@ We conduct our experiments on the Waymo dataset, and the data preparation proces
 
 ## 🚀 Running
 ### Training
+
+Dynamic scene:
+
 ```shell
 export PYTHONPATH=$(pwd)
 start_timestep=0 # start frame index for training
@@ -66,6 +69,22 @@ end_timestep=50 # end frame index, -1 for the last frame
 
 python tools/train.py \
     --config_file configs/invrgbl.yaml \
+    --output_root $output_root \
+    --project $project \
+    --run_name $expname \
+    dataset=waymo/1cams \ #camera number
+    data.scene_idx=$scene_idx \
+    data.start_timestep=$start_timestep \
+    data.end_timestep=$end_timestep
+```
+
+```shell
+export PYTHONPATH=$(pwd)
+start_timestep=0 # start frame index for training
+end_timestep=50 # end frame index, -1 for the last frame
+
+python tools/train.py \
+    --config_file configs/invrgbl_static.yaml \
     --output_root $output_root \
     --project $project \
     --run_name $expname \

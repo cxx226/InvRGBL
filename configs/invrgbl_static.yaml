@@ -24,14 +24,50 @@ trainer:
       w: 0.2
     mask:
       w: 0.05
-      opacity_loss_type: bce # choose from [bce, safe_bce]
+      opacity_loss_type: bce   # [bce, safe_bce]
     depth:
-      w: 0.01 # weight of depth loss
-      inverse_depth: False # whether to use inverse depth, NOTE that when set to True, must normalize=True
-      normalize: False # whether to normalize depth loss
-      loss_type: l1 # choose from ["l1", "l2"]
+      w: 0.01
+      inverse_depth: False
+      normalize: False
+      loss_type: l1
+      lidar_w_decay: -1
     affine:
-      w: 0.00001 # weight of affine regularization
+    w: 0.00001
+    pbr:
+      w: 1.0
+    diffuse_light:
+      w: 0.001
+    albedo:
+      w: 0.01
+    roughness:
+      w: 0.1
+    smooth_roughness:
+      w: 0.05
+    smooth_sun_visibility:
+      w: 0.05
+    sun_visibility:
+      w: 0.1
+    intensity:
+      w: 0.1
+    ref_neighborhood_smoothness:
+      w: 0.01
+    ref_region_consistency:
+      w: 0.001
+    albedo_smooth:
+      w: 0.1
+    ref_region_consistency_albedo:
+      w: 0.2
+    gt_normal:
+      w: 0.1
+    smooth_normal:
+      w: 0.01
+    opacity_entropy:
+      w: 0.001
+    inverse_depth_smoothness:
+      w: 0.01
+    dynamic_region:
+      w: 1.0
+      start_from: 0
   res_schedule:
     double_steps: 250 # training starts at 1/d resolution, every n steps this is doubled
     downscale_times: 2 # at the beginning, resolution is 1/2^d, where d is this number

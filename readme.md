@@ -78,6 +78,8 @@ python tools/train.py \
     data.end_timestep=$end_timestep
 ```
 
+Static scene:
+
 ```shell
 export PYTHONPATH=$(pwd)
 start_timestep=0 # start frame index for training
